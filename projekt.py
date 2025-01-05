@@ -189,9 +189,9 @@ class App(ctk.CTk):
             
             
 
-        # generator liczb parzystych(kolejne wiersze w których będą wyświetlane pomiary)
+        # generator liczb(kolejne wiersze w których będą wyświetlane pomiary)
         def number_generator():
-            for i in range(0, 1000, 2):
+            for i in range(0, 1000, 3):
                 yield i
         gen = number_generator()
 
@@ -209,7 +209,7 @@ class App(ctk.CTk):
                                                     + self.tab1.frame1.fuse_type_nr.get(),
                                                     font = self.font_arial15,
                                                     text_color='black')
-            self.tab1.framescrol.label2.grid(row=actual_row+1, column=0, padx=10, pady=0, sticky="w")
+            self.tab1.framescrol.label2.grid(row=actual_row+1, column=0, padx=10, pady=0, sticky="nw")
 
             self.tab1.framescrol.label3 = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=str(self.tab1.frame2.ipz_security_value_result.cget("text"))
@@ -245,17 +245,44 @@ class App(ctk.CTk):
                                                     text_color="#008B00" if self.tab1.frame2.grade_result.cget("text") == "TAK" else "#8B0000")   
             self.tab1.framescrol.label7.grid(row=actual_row+1, column=0, padx=520, pady=0, sticky="w", columnspan = 6)
 
+
+            self.tab1.framescrol.delete_button = ctk.CTkButton(self.tab1.framescrol, 
+                                                    text="Usuń",
+                                                    command=lambda: [self.tab1.framescrol.label1.destroy(),
+                                                                     self.tab1.framescrol.label2.destroy(),
+                                                                     self.tab1.framescrol.label3.destroy(),
+                                                                     self.tab1.framescrol.label4.destroy(),
+                                                                     self.tab1.framescrol.label5.destroy(),
+                                                                     self.tab1.framescrol.label6.destroy(),
+                                                                     self.tab1.framescrol.label7.destroy(),
+                                                                     self.tab1.framescrol.delete_button.destroy()],
+                                                    )
+            self.tab1.framescrol.delete_button.grid(row=actual_row+1, column=0, padx=630, pady=0, sticky="w", columnspan=7)
+
+            self.tab1.framescrol.label8 = ctk.CTkLabel(self.tab1.framescrol, 
+                                                    text="-"*200,
+                                                    text_color='black')
+            self.tab1.framescrol.label8.grid(row=actual_row+2, column=0, padx=0, pady=0, sticky="w", columnspan=7)
+
+            self.tab1.framescrol.update_idletasks()
+            self.tab1.framescrol._parent_canvas.yview_moveto(1.0)
+    
+
             
             
             self.tab1.frame2.add_measurement_button.configure(state='disabled')
 
+            
+
+        
+            
         
         
         # Rama pierwsza - w nią należy wpisać dane do obliczeń
         self.tab1.frame1 = ctk.CTkFrame(self.tab1,
                                         width=400,
                                         height=200,
-                                        fg_color="silver",
+                                        fg_color="#DEDEDE",
                                         )
         self.tab1.frame1.grid(row=0, column=0, padx=10, pady=0, sticky="n")
         self.tab1.frame1.grid_propagate(False)
@@ -340,7 +367,7 @@ class App(ctk.CTk):
         self.tab1.frame2 = ctk.CTkFrame(self.tab1,
                                         width=400,
                                         height=200,
-                                        fg_color="silver")
+                                        fg_color="#DEDEDE")
         self.tab1.frame2.grid(row=1, column=0, padx=10, pady=20, sticky="n")
         self.tab1.frame2.grid_propagate(False)
 
@@ -424,7 +451,7 @@ class App(ctk.CTk):
                                         width=670, 
                                         height=356,
                                         label_font = self.font_arial12,
-                                        fg_color="silver",
+                                        fg_color="#DEDEDE",
                                         scrollbar_button_color="black",
                                         label_text="Zab.".ljust(15)+
                                         "IPZ zab.[\u03A9]".ljust(25)+ 
