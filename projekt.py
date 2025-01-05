@@ -464,6 +464,4 @@ class App(ctk.CTk):
         
         self.tab1.framescrol.grid(row=0, column=1, padx=0, pady=0, sticky = "n", rowspan=2)
 
-app = App()
-app.mainloop()
 
