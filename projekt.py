@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from pomiar import Pomiar
+import ctypes
 
 ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
 ctk.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
@@ -8,6 +9,8 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title('Pomiary Elektryczne')
+        self.iconbitmap('lightning.ico')
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ikona.ikona")
         self.geometry('1200x600')
         self.parameters() 
         self.main_window()
@@ -25,7 +28,7 @@ class App(ctk.CTk):
         
         self.font_arial15 = ctk.CTkFont(family="Arial", 
                       size=15, 
-                      slant="roman", 
+                      slant="roman"
                       )
         self.font_arial16 = ctk.CTkFont(family="Arial",
                         size=16,
@@ -298,7 +301,7 @@ class App(ctk.CTk):
         self.tab1.frame1.circuit_name = ctk.CTkLabel(self.tab1.frame1,
                                              text = "Nazwa:",
                                              font=self.font_arial15,
-                                             text_color='black',
+                                             text_color='black'
                                              )
         self.tab1.frame1.circuit_name.grid(row=1, column=0, padx=20, pady=5, sticky="w")
 
@@ -306,6 +309,7 @@ class App(ctk.CTk):
                                                   placeholder_text="",
                                                   width=200,
                                                   textvariable=self.entry_name_variable,
+
                                                   ) 
         self.tab1.frame1.entry_circuit_name.grid(row=1, column=1, padx=0, pady=5, sticky="w", columnspan=2)
 
