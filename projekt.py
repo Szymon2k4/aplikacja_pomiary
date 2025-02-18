@@ -2,6 +2,9 @@ import customtkinter as ctk
 from pomiar import Pomiar
 import ctypes
 
+
+from data_manage import data_man
+
 ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
 ctk.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
 
@@ -198,82 +201,145 @@ class App(ctk.CTk):
                 yield i
         gen = number_generator()
 
+
+        def handle_stop_iteration_error():
+            raise NotImplementedError
+            
+        delete_buttons_dict = dict()
+        labels = dict()
+        for i in range(8):
+            labels[i] = dict()
+        
+        
+        # rama3 - dodawanie kolejnych pomiarów
         def add_measurement():
-            actual_row = next(gen)
-            self.tab1.framescrol.label1 = ctk.CTkLabel(self.tab1.framescrol, 
+            def del_row():
+                    for i in range(8):
+                        labels[i][actual_row].destroy()
+                    delete_buttons_dict[actual_row].destroy()
+                    self.tab1.check_window.destroy()
+                
+            def delete_row():
+                try:
+                    self.tab1.check_window.destroy()
+                except AttributeError:
+                    pass
+
+                self.tab1.check_window = ctk.CTkToplevel(self.tab1)  # Tworzymy nowe okno
+                self.tab1.check_window.geometry("350x150")  # Ustawienie rozmiaru
+                self.tab1.check_window.title("Usuwanie pomiaru")  # Tytuł okna
+
+                for i in range(2):  
+                    self.tab1.check_window.grid_columnconfigure(i, weight=1)
+                    self.tab1.check_window.grid_rowconfigure(i, weight=1)
+                # Etykieta w nowym oknie
+                pom = labels[0][actual_row].cget("text")
+                self.tab1.check_window.label = ctk.CTkLabel(self.tab1.check_window, text=f'Kliknij OK aby potwierdzić usunięcie pomiaru "{pom}"')
+                self.tab1.check_window.label.grid(row = 0, column = 0, padx=0, pady=10, sticky = 'n', columnspan = 2)
+                
+                # Przycisk zamykający okno
+                self.tab1.check_window.ok_button = ctk.CTkButton(self.tab1.check_window, text="OK", command=del_row)
+                self.tab1.check_window.ok_button.grid(row = 1, column = 0, padx=20, pady=0, sticky = 'w' )
+
+                self.tab1.check_window.nok_button = ctk.CTkButton(self.tab1.check_window, text="Anuluj", command=self.tab1.check_window.destroy)
+                self.tab1.check_window.nok_button.grid(row = 1, column = 1, padx=20, pady=0, sticky = 'e' )
+
+                
+                
+                                                    
+            
+            try:
+                actual_row = next(gen)
+            except StopIteration:
+                handle_stop_iteration_error()
+            # nazwa 
+            self.tab1.framescrol.label = dict()
+            for i in range(8):
+                self.tab1.framescrol.label[i] = dict()
+            self.tab1.framescrol.label[0][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                             text=self.tab1.frame1.entry_circuit_name.get()
                                             + " ",
                                             font = self.font_arial16,
                                             text_color="#1f538d")
-            self.tab1.framescrol.label1.grid(row=actual_row, column=0, padx=10, pady=5, sticky="w", columnspan=7)
-
-            self.tab1.framescrol.label2 = ctk.CTkLabel(self.tab1.framescrol, 
+            self.tab1.framescrol.label[0][actual_row].grid(row=actual_row, column=0, padx=10, pady=5, sticky="w", columnspan = 6)
+            
+            # typ bezpiecznika
+            self.tab1.framescrol.label[1][actual_row]= ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=self.tab1.frame1.fuse_type_ABCD.get() 
                                                     + self.tab1.frame1.fuse_type_nr.get(),
                                                     font = self.font_arial15,
                                                     text_color='black')
-            self.tab1.framescrol.label2.grid(row=actual_row+1, column=0, padx=10, pady=0, sticky="nw")
+            self.tab1.framescrol.label[1][actual_row].grid(row=actual_row+1, column = 0, padx=10, pady=0, sticky="w")
 
-            self.tab1.framescrol.label3 = ctk.CTkLabel(self.tab1.framescrol, 
+            self.tab1.framescrol.label[2][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=str(self.tab1.frame2.ipz_security_value_result.cget("text"))
                                                     +"\u03A9",
                                                     font = self.font_arial15,
                                                     text_color='black')
-            self.tab1.framescrol.label3.grid(row=actual_row+1, column=0, padx=80, pady=0, sticky="w", columnspan=2)
+            self.tab1.framescrol.label[2][actual_row].grid(row=actual_row+1, column = 1, padx=10, pady=0, sticky="w")
 
-            self.tab1.framescrol.label4 = ctk.CTkLabel(self.tab1.framescrol, 
+            self.tab1.framescrol.label[3][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=str(self.tab1.frame2.short_circuit_current_protection_result.cget("text"))
                                                     +"A",
                                                     font = self.font_arial15,
                                                     text_color='black')
-            self.tab1.framescrol.label4.grid(row=actual_row+1, column=0, padx=190, pady=0, sticky="w", columnspan=3)
+            self.tab1.framescrol.label[3][actual_row].grid(row=actual_row+1, column = 2, padx=10, pady=0, sticky="w")
 
-            self.tab1.framescrol.label5 = ctk.CTkLabel(self.tab1.framescrol, 
+            self.tab1.framescrol.label[4][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=self.tab1.frame1.entry_measured_ipz.get()
                                                     +"\u03A9",
                                                     font = self.font_arial15,
                                                     text_color='black')
-            self.tab1.framescrol.label5.grid(row=actual_row+1, column=0, padx=300, pady=0, sticky="w", columnspan=4)
+            self.tab1.framescrol.label[4][actual_row].grid(row=actual_row+1, column = 3, padx=10, pady=0, sticky="w")
 
-            self.tab1.framescrol.label6 = ctk.CTkLabel(self.tab1.framescrol, 
+            self.tab1.framescrol.label[5][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=str(self.tab1.frame2.calculated_short_circuit_current_result.cget("text"))
                                                     + "A",
                                                     font = self.font_arial15,
                                                     text_color='black')
-            self.tab1.framescrol.label6.grid(row=actual_row+1, column=0, padx=410, pady=0, sticky="w", columnspan=5)
+            self.tab1.framescrol.label[5][actual_row].grid(row=actual_row+1, column = 4, padx=10, pady=0, sticky="w")
 
-            self.tab1.framescrol.label7 = ctk.CTkLabel(self.tab1.framescrol, 
+            #ocena
+            self.tab1.framescrol.label[6][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=self.tab1.frame2.grade_result.cget("text"), 
                                                     font = self.font_arial15,
                                                     text_color="#008B00" if self.tab1.frame2.grade_result.cget("text") == "TAK" else "#8B0000")   
-            self.tab1.framescrol.label7.grid(row=actual_row+1, column=0, padx=520, pady=0, sticky="w", columnspan = 6)
-
-
+            self.tab1.framescrol.label[6][actual_row].grid(row=actual_row+1, column = 5, padx=10, pady=0, sticky="w")
+            
+            
             self.tab1.framescrol.delete_button = ctk.CTkButton(self.tab1.framescrol, 
-                                                    text="Usuń",
-                                                    command=lambda: [self.tab1.framescrol.label1.destroy(),
-                                                                     self.tab1.framescrol.label2.destroy(),
-                                                                     self.tab1.framescrol.label3.destroy(),
-                                                                     self.tab1.framescrol.label4.destroy(),
-                                                                     self.tab1.framescrol.label5.destroy(),
-                                                                     self.tab1.framescrol.label6.destroy(),
-                                                                     self.tab1.framescrol.label7.destroy(),
-                                                                     self.tab1.framescrol.delete_button.destroy()],
-                                                    )
-            self.tab1.framescrol.delete_button.grid(row=actual_row+1, column=0, padx=630, pady=0, sticky="w", columnspan=7)
-
-            self.tab1.framescrol.label8 = ctk.CTkLabel(self.tab1.framescrol, 
+                                                    text="usuń",
+                                                    width = 55,
+                                                    height = 35,
+                                                    command = delete_row)
+                                                    
+                                       
+            self.tab1.framescrol.delete_button.grid(row=actual_row+1, column = 6, padx=10, pady=0, sticky="w")
+            
+            self.tab1.framescrol.label[7][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text="-"*200,
                                                     text_color='black')
-            self.tab1.framescrol.label8.grid(row=actual_row+2, column=0, padx=0, pady=0, sticky="w", columnspan=7)
+            self.tab1.framescrol.label[7][actual_row].grid(row=actual_row+2, column=0, padx=0, pady=0, sticky="n", columnspan=7)
 
+            # zapisywanie danych do slownikow
+            for i in range(8):
+                labels[i][actual_row] = self.tab1.framescrol.label[i][actual_row]
+            
+            delete_buttons_dict[actual_row] = self.tab1.framescrol.delete_button
+
+
+            print(delete_buttons_dict)
+            # przesuwanie strony w dół
             self.tab1.framescrol.update_idletasks()
             self.tab1.framescrol._parent_canvas.yview_moveto(1.0)
-    
+            self.tab1.frame2.add_measurement_button.configure(state='disabled')
+
+
 
             
-            
-            self.tab1.frame2.add_measurement_button.configure(state='disabled')
+            # przekazywnie dodadanych danych do plikow
+            data_table = [labels[i][actual_row].cget("text") for i in range(7)]
+            data_man(data_table)
 
             
 
@@ -285,7 +351,7 @@ class App(ctk.CTk):
         self.tab1.frame1 = ctk.CTkFrame(self.tab1,
                                         width=400,
                                         height=200,
-                                        fg_color="#DEDEDE",
+                                        fg_color="white",
                                         )
         self.tab1.frame1.grid(row=0, column=0, padx=10, pady=0, sticky="n")
         self.tab1.frame1.grid_propagate(False)
@@ -371,7 +437,7 @@ class App(ctk.CTk):
         self.tab1.frame2 = ctk.CTkFrame(self.tab1,
                                         width=400,
                                         height=200,
-                                        fg_color="#DEDEDE")
+                                        fg_color="white")
         self.tab1.frame2.grid(row=1, column=0, padx=10, pady=20, sticky="n")
         self.tab1.frame2.grid_propagate(False)
 
@@ -392,7 +458,7 @@ class App(ctk.CTk):
 
         self.tab1.frame2.ipz_security_value_result = ctk.CTkLabel(self.tab1.frame2,
                                                         text = "",
-                                                        font=self.font_arial15,
+                                                        font = self.font_arial15,
                                                         text_color='black',
                                                         )
         self.tab1.frame2.ipz_security_value_result.grid(row=1, column=1, padx=20, pady=0, sticky="w")
@@ -450,22 +516,95 @@ class App(ctk.CTk):
                                                )
         self.tab1.frame2.add_measurement_button.grid(row=5, column=0, padx=15, pady=10, sticky="w")
 
+
         # Rama trzecia - w niej wyświetlają się pomiary
+        print_format = 23
         self.tab1.framescrol = ctk.CTkScrollableFrame(self.tab1, 
                                         width=670, 
-                                        height=356,
+                                        height=320,
                                         label_font = self.font_arial12,
-                                        fg_color="#DEDEDE",
-                                        scrollbar_button_color="black",
-                                        label_text="Zab.".ljust(15)+
-                                        "IPZ zab.[\u03A9]".ljust(25)+ 
-                                        "P. zw. zab.[A]".ljust(25)+
-                                        "IPZ zm.[\u03A9]".ljust(25)+
-                                        "P. zw. obl.[A]".ljust(25)+
-                                        "Ocena".ljust(15)+ 
-                                        "Usuń",
-                                        label_anchor="w",)
+                                        fg_color="white",
+                                        scrollbar_button_color="black")
+                                        # label_text="Zab.".ljust(print_format)+
+                                        # "IPZ zab.".ljust(print_format)+ 
+                                        # "P. zw. zab.".ljust(print_format)+
+                                        # "IPZ zm.".ljust(print_format)+
+                                        # "P. zw. obl.".ljust(print_format)+
+                                        # "Ocena".ljust(print_format)+ 
+                                        # "Usuń",
+                                        # label_anchor="w",)
         
-        self.tab1.framescrol.grid(row=0, column=1, padx=0, pady=0, sticky = "n", rowspan=2)
+        self.tab1.framescrol.grid(row=0, column=1, padx=0, pady=40, sticky = "n", rowspan=2)
+
+        for i in range(7):  
+            self.tab1.framescrol.grid_columnconfigure(i, weight=1)
+        
+
+        # # tytuly ramy 3
+        self.tab1.header_frame = ctk.CTkFrame(self.tab1, 
+                                              width=693,
+                                              height=30,
+                                              fg_color = "black")
+
+        self.tab1.header_frame.grid(row = 0, column = 1, padx = 0, pady = 0, sticky = 'n')
+        self.tab1.header_frame.grid_propagate(False)
+
+        for i in range(7):  
+            self.tab1.header_frame.grid_columnconfigure(i, weight=1)
+
+        self.tab1.header_frame.label1 = ctk.CTkLabel(self.tab1.header_frame,
+                                                     text = 'Typ zab.',
+                                                     text_color="white",
+                                                     )
+        self.tab1.header_frame.label1.grid(row = 0, column = 0, padx = 10, pady = 0, sticky = 'w', columnspan = 2)
+
+        self.tab1.header_frame.label2 = ctk.CTkLabel(self.tab1.header_frame,
+                                                     text = ' IPZ zab.',
+                                                     text_color="white")
+        
+        self.tab1.header_frame.label2.grid(row = 0, column = 1, padx = 5, pady = 0, sticky = 'w', columnspan = 2)
+
+        self.tab1.header_frame.label3 = ctk.CTkLabel(self.tab1.header_frame,
+                                                     text = ' Prąd zw.',
+                                                     text_color="white")
+        
+        self.tab1.header_frame.label3.grid(row = 0, column = 2, padx = 15, pady = 0, sticky = 'w', columnspan = 2)
+
+        self.tab1.header_frame.label4 = ctk.CTkLabel(self.tab1.header_frame,
+                                                     text = ' IPZ zm.',
+                                                     text_color="white")
+        
+        self.tab1.header_frame.label4.grid(row = 0, column = 3, padx = 10, pady = 0, sticky = 'w', columnspan = 2)
+
+        self.tab1.header_frame.label5 = ctk.CTkLabel(self.tab1.header_frame,
+                                                     text = 'Prąd zw. obl.',
+                                                     text_color="white")
+        
+        self.tab1.header_frame.label5.grid(row = 0, column = 4, padx = 0, pady = 0, sticky = 'w', columnspan = 2)
+
+        self.tab1.header_frame.label6 = ctk.CTkLabel(self.tab1.header_frame,
+                                                     text = 'Ocena',
+                                                     text_color="white")
+        
+        self.tab1.header_frame.label6.grid(row = 0, column = 5, padx = 0, pady = 0, sticky = 'w', columnspan = 2)
+
+        self.tab1.header_frame.label6 = ctk.CTkLabel(self.tab1.header_frame,
+                                                     text = 'Usuń',
+                                                     text_color="black")
+        
+        self.tab1.header_frame.label6.grid(row = 0, column = 6, padx = 17, pady = 0, sticky = 'w', columnspan = 1)
+
+        
+        
+
+        
+        # okno do przyciskow
+        self.tab1.buttons_frame = ctk.CTkFrame(self.tab1, 
+                                              width=693,
+                                              height=40,
+                                              fg_color = "white")
+
+        self.tab1.buttons_frame.grid(row = 1, column = 1, padx = 0, pady = 20, sticky = 'ws')
+        self.tab1.buttons_frame.grid_propagate(False)
 
 

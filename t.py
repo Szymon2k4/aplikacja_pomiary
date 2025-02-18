@@ -1,35 +1,22 @@
 import customtkinter as ctk
+import uuid  # Generowanie unikalnych ID
 
-class App(ctk.CTk):
-    def __init__(self):
-        super().__init__()
-        
-        self.geometry("300x400")
-        self.title("Auto-scroll Frame")
+# Tworzymy główne okno
+root = ctk.CTk()
+root.geometry("300x200")
 
-        # Tworzymy scrollowalną ramkę
-        self.scrollable_frame = ctk.CTkScrollableFrame(self, width=250, height=300)
-        self.scrollable_frame.pack(pady=20, padx=20)
+# Słownik przechowujący {unikalne_id: przycisk}
+buttons = {}
 
-        # Przycisk do dodawania nowych elementów
-        self.add_button = ctk.CTkButton(self, text="Dodaj element", command=self.add_item)
-        self.add_button.pack(pady=10)
+# Funkcja obsługująca kliknięcie przycisku
+def button_clicked(button_id):
+    print(f"Kliknięto przycisk o ID: {button_id}")  # Wyświetlenie ID w konsoli
 
-        # Licznik elementów
-        self.item_count = 0
+# Tworzenie 3 przycisków
+for i in range(3):
+    button_id = str(uuid.uuid4())  # Generowanie unikalnego ID
+    btn = ctk.CTkButton(root, text=f"Przycisk {i+1}", command=lambda id=button_id: button_clicked(id))
+    btn.pack(pady=5)
+    buttons[button_id] = btn  # Dodanie do słownika
 
-    def add_item(self):
-        # Dodajemy nowy element do scrollowalnej ramki
-        self.item_count += 1
-        label = ctk.CTkLabel(self.scrollable_frame, text=f"Element {self.item_count}")
-        label.pack(pady=5)
-
-        # Automatyczne przewijanie na dół
-        self.scrollable_frame.update_idletasks()
-        self.scrollable_frame._parent_canvas.yview_moveto(1.0)
-       
-
-# Uruchomienie aplikacji
-if __name__ == "__main__":
-    app = App()
-    app.mainloop()
+root.mainloop()
