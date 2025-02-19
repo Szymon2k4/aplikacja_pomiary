@@ -1,9 +1,10 @@
 import customtkinter as ctk
 from pomiar import Pomiar
 import ctypes
+import uuid
 
 
-from data_manage import data_man
+from data_manage import data_man, remove_data_using_id
 
 ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
 ctk.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
@@ -17,6 +18,11 @@ class App(ctk.CTk):
         self.geometry('1200x600')
         self.parameters() 
         self.main_window()
+
+    @staticmethod
+    def generate_unique_id():
+        return str(uuid.uuid4())  
+        
 
 
     # paramtery
@@ -148,10 +154,13 @@ class App(ctk.CTk):
                 return  # brak danych
             
             # wykonanie obliczeń(pomiaru)
-            pomiar = Pomiar(self.tab1.frame1.circuit_name.cget("text"),
-                            self.tab1.frame1.fuse_type_ABCD.get(),
-                            self.tab1.frame1.fuse_type_nr.get(),
-                            self.tab1.frame1.entry_measured_ipz.get())
+
+            nazwa = self.tab1.frame1.circuit_name.cget("text")
+            typ_bez = self.tab1.frame1.fuse_type_ABCD.get()
+            typ_bez_liczba = self.tab1.frame1.fuse_type_nr.get()
+            ipz_zmierzone = self.tab1.frame1.entry_measured_ipz.get()
+            ipz_zmierzone = ipz_zmierzone.replace(',', '.')
+            pomiar = Pomiar(nazwa, typ_bez, typ_bez_liczba, ipz_zmierzone)
             
             # zebranie danych z obliczeń
             self.tab1.frame2.ipz_security_value_result.configure(text=round(pomiar.ipz_zabezpieczenia(), 2))
@@ -192,8 +201,53 @@ class App(ctk.CTk):
             self.tab1.frame2.short_circuit_current_protection_result.configure(text="")
             self.tab1.frame2.calculated_short_circuit_current_result.configure(text="")
             self.tab1.frame2.grade_result.configure(text="")
+
+        #funckja przycisk usun
+        def remove_all():
+            try:
+                self.tab1.check_window.destroy()
+            except AttributeError:
+                pass
+
+            self.tab1.check_window = ctk.CTkToplevel(self.tab1)  # Tworzymy nowe okno
+            self.tab1.check_window.geometry("350x150")  # Ustawienie rozmiaru
+            self.tab1.check_window.title("Usuwanie pomiarów")  # Tytuł okna
+
+            for i in range(2):  
+                self.tab1.check_window.grid_columnconfigure(i, weight=1)
+                self.tab1.check_window.grid_rowconfigure(i, weight=1)
+            # Etykieta w nowym oknie
+            self.tab1.check_window.label = ctk.CTkLabel(self.tab1.check_window, text=f'Kliknij OK aby potwierdzić usunięcie wszystkich pomiarów')
+            self.tab1.check_window.label.grid(row = 0, column = 0, padx=0, pady=10, sticky = 'n', columnspan = 2)
             
+            # Przycisk zamykający okno
+            self.tab1.check_window.ok_button = ctk.CTkButton(self.tab1.check_window, text="OK", command=remove_all2)
+            self.tab1.check_window.ok_button.grid(row = 1, column = 0, padx=20, pady=0, sticky = 'w' )
+
+            self.tab1.check_window.nok_button = ctk.CTkButton(self.tab1.check_window, text="Anuluj", command=self.tab1.check_window.destroy)
+            self.tab1.check_window.nok_button.grid(row = 1, column = 1, padx=20, pady=0, sticky = 'e' )
+
             
+
+        def remove_all2():
+            self.tab1.buttons_frame.remove_all.configure(state = 'disabled')
+            ar = 0
+            removing_id = list()
+            while True:
+                try:
+                    for i in range(8):
+                        labels[i][ar].destroy()
+                    delete_buttons_dict[ar].destroy()
+                    removing_id.append(labels[8][ar])
+                    ar +=3
+                except KeyError:
+                    break
+            
+            self.tab1.check_window.destroy()
+            remove_data_using_id(removing_id)
+
+        def export_excel():
+            raise NotImplementedError
 
         # generator liczb(kolejne wiersze w których będą wyświetlane pomiary)
         def number_generator():
@@ -207,27 +261,33 @@ class App(ctk.CTk):
             
         delete_buttons_dict = dict()
         labels = dict()
-        for i in range(8):
+        for i in range(9):
             labels[i] = dict()
         
         
         # rama3 - dodawanie kolejnych pomiarów
         def add_measurement():
-            def del_row():
-                    for i in range(8):
-                        labels[i][actual_row].destroy()
-                    delete_buttons_dict[actual_row].destroy()
-                    self.tab1.check_window.destroy()
-                
+            self.tab1.buttons_frame.remove_all.configure(state = 'normal')
+            self.tab1.buttons_frame.export_excel.configure(state = 'normal')
+
+            try:
+                actual_row = next(gen)
+            except StopIteration:
+                raise NotImplementedError
+                handle_stop_iteration_error()
+ 
+            # funkcje delete_row daje wewnatrz funkcji add_measuremenet, pponoewaz podczs jej wywolania podstawiona zostaje wartosc actual_row,
+            #dlatego do odpowiedniego przycisku zostaje przypisana wartosc delete_button_dict[wartosc[actual_row]]
+            #funkcja dd_measurement zawsze zosatnie najpier wywaloana przed wywalonaiem delete_row
             def delete_row():
                 try:
                     self.tab1.check_window.destroy()
                 except AttributeError:
                     pass
 
-                self.tab1.check_window = ctk.CTkToplevel(self.tab1)  # Tworzymy nowe okno
-                self.tab1.check_window.geometry("350x150")  # Ustawienie rozmiaru
-                self.tab1.check_window.title("Usuwanie pomiaru")  # Tytuł okna
+                self.tab1.check_window = ctk.CTkToplevel(self.tab1)  
+                self.tab1.check_window.geometry("350x150") 
+                self.tab1.check_window.title("Usuwanie pomiaru")  
 
                 for i in range(2):  
                     self.tab1.check_window.grid_columnconfigure(i, weight=1)
@@ -238,24 +298,25 @@ class App(ctk.CTk):
                 self.tab1.check_window.label.grid(row = 0, column = 0, padx=0, pady=10, sticky = 'n', columnspan = 2)
                 
                 # Przycisk zamykający okno
-                self.tab1.check_window.ok_button = ctk.CTkButton(self.tab1.check_window, text="OK", command=del_row)
+                self.tab1.check_window.ok_button = ctk.CTkButton(self.tab1.check_window, text="OK", command=delete_row2)
                 self.tab1.check_window.ok_button.grid(row = 1, column = 0, padx=20, pady=0, sticky = 'w' )
 
                 self.tab1.check_window.nok_button = ctk.CTkButton(self.tab1.check_window, text="Anuluj", command=self.tab1.check_window.destroy)
                 self.tab1.check_window.nok_button.grid(row = 1, column = 1, padx=20, pady=0, sticky = 'e' )
+            def delete_row2():
+                    for i in range(8):
+                        labels[i][actual_row].destroy()
+                    delete_buttons_dict[actual_row].destroy()
+                    self.tab1.check_window.destroy()
 
+                    rmv_id = labels[8][actual_row]
+                    remove_data_using_id(rmv_id)
                 
-                
-                                                    
-            
-            try:
-                actual_row = next(gen)
-            except StopIteration:
-                handle_stop_iteration_error()
-            # nazwa 
+            #slownik do przechowywania kolejnych danych
             self.tab1.framescrol.label = dict()
             for i in range(8):
                 self.tab1.framescrol.label[i] = dict()
+            #nazwa
             self.tab1.framescrol.label[0][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                             text=self.tab1.frame1.entry_circuit_name.get()
                                             + " ",
@@ -263,14 +324,15 @@ class App(ctk.CTk):
                                             text_color="#1f538d")
             self.tab1.framescrol.label[0][actual_row].grid(row=actual_row, column=0, padx=10, pady=5, sticky="w", columnspan = 6)
             
-            # typ bezpiecznika
+            #typ bezpiecznika
             self.tab1.framescrol.label[1][actual_row]= ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=self.tab1.frame1.fuse_type_ABCD.get() 
                                                     + self.tab1.frame1.fuse_type_nr.get(),
                                                     font = self.font_arial15,
                                                     text_color='black')
             self.tab1.framescrol.label[1][actual_row].grid(row=actual_row+1, column = 0, padx=10, pady=0, sticky="w")
-
+            
+            #ipz obliczone
             self.tab1.framescrol.label[2][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=str(self.tab1.frame2.ipz_security_value_result.cget("text"))
                                                     +"\u03A9",
@@ -278,6 +340,7 @@ class App(ctk.CTk):
                                                     text_color='black')
             self.tab1.framescrol.label[2][actual_row].grid(row=actual_row+1, column = 1, padx=10, pady=0, sticky="w")
 
+            #prad zw. zab.
             self.tab1.framescrol.label[3][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=str(self.tab1.frame2.short_circuit_current_protection_result.cget("text"))
                                                     +"A",
@@ -285,6 +348,7 @@ class App(ctk.CTk):
                                                     text_color='black')
             self.tab1.framescrol.label[3][actual_row].grid(row=actual_row+1, column = 2, padx=10, pady=0, sticky="w")
 
+            #obliczone IPZ
             self.tab1.framescrol.label[4][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=self.tab1.frame1.entry_measured_ipz.get()
                                                     +"\u03A9",
@@ -292,6 +356,7 @@ class App(ctk.CTk):
                                                     text_color='black')
             self.tab1.framescrol.label[4][actual_row].grid(row=actual_row+1, column = 3, padx=10, pady=0, sticky="w")
 
+            #obliczony prad zw. zab.
             self.tab1.framescrol.label[5][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=str(self.tab1.frame2.calculated_short_circuit_current_result.cget("text"))
                                                     + "A",
@@ -306,16 +371,16 @@ class App(ctk.CTk):
                                                     text_color="#008B00" if self.tab1.frame2.grade_result.cget("text") == "TAK" else "#8B0000")   
             self.tab1.framescrol.label[6][actual_row].grid(row=actual_row+1, column = 5, padx=10, pady=0, sticky="w")
             
-            
+            #przycisk usun
             self.tab1.framescrol.delete_button = ctk.CTkButton(self.tab1.framescrol, 
                                                     text="usuń",
                                                     width = 55,
                                                     height = 35,
-                                                    command = delete_row)
-                                                    
-                                       
+                                                    command = delete_row,
+                                                    state = 'disabled') 
             self.tab1.framescrol.delete_button.grid(row=actual_row+1, column = 6, padx=10, pady=0, sticky="w")
             
+            #linia poiedzy koljenymi pomiarami
             self.tab1.framescrol.label[7][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text="-"*200,
                                                     text_color='black')
@@ -324,11 +389,14 @@ class App(ctk.CTk):
             # zapisywanie danych do slownikow
             for i in range(8):
                 labels[i][actual_row] = self.tab1.framescrol.label[i][actual_row]
-            
             delete_buttons_dict[actual_row] = self.tab1.framescrol.delete_button
 
+            labels[8][actual_row] = self.generate_unique_id()
+           
+            
 
-            print(delete_buttons_dict)
+            
+            
             # przesuwanie strony w dół
             self.tab1.framescrol.update_idletasks()
             self.tab1.framescrol._parent_canvas.yview_moveto(1.0)
@@ -339,7 +407,15 @@ class App(ctk.CTk):
             
             # przekazywnie dodadanych danych do plikow
             data_table = [labels[i][actual_row].cget("text") for i in range(7)]
+            data_table.append(labels[8][actual_row])
             data_man(data_table)
+
+
+
+            self.tab1.framescrol.delete_button.configure(state = 'normal')
+
+
+            ## koneic funkcji add_measu
 
             
 
@@ -421,7 +497,7 @@ class App(ctk.CTk):
                                                text="Oblicz",
                                                command=calculate, 
                                                )
-        print(self.tab1.frame1.entry_circuit_name.get())
+        
 
         self.tab1.frame1.calculate_button.grid(row=4, column=0, padx=15, pady=10, sticky="w")
 
@@ -540,11 +616,11 @@ class App(ctk.CTk):
             self.tab1.framescrol.grid_columnconfigure(i, weight=1)
         
 
-        # # tytuly ramy 3
+        # tytuly ramy 3
         self.tab1.header_frame = ctk.CTkFrame(self.tab1, 
                                               width=693,
                                               height=30,
-                                              fg_color = "black")
+                                              fg_color = "#2B2B2B")
 
         self.tab1.header_frame.grid(row = 0, column = 1, padx = 0, pady = 0, sticky = 'n')
         self.tab1.header_frame.grid_propagate(False)
@@ -590,7 +666,7 @@ class App(ctk.CTk):
 
         self.tab1.header_frame.label6 = ctk.CTkLabel(self.tab1.header_frame,
                                                      text = 'Usuń',
-                                                     text_color="black")
+                                                     text_color="#2B2B2B")
         
         self.tab1.header_frame.label6.grid(row = 0, column = 6, padx = 17, pady = 0, sticky = 'w', columnspan = 1)
 
@@ -606,5 +682,29 @@ class App(ctk.CTk):
 
         self.tab1.buttons_frame.grid(row = 1, column = 1, padx = 0, pady = 20, sticky = 'ws')
         self.tab1.buttons_frame.grid_propagate(False)
+        
+        for i in range(2):  
+            self.tab1.buttons_frame.grid_columnconfigure(i, weight=1)
+
+
+        self.tab1.buttons_frame.remove_all = ctk.CTkButton(self.tab1.buttons_frame,
+                                                            text = 'Usuń wszystko',
+                                                            width = 140,
+                                                            height = 28,
+                                                            command = remove_all,
+                                                            state = 'disabled')
+        self.tab1.buttons_frame.remove_all.grid(row = 0, column = 0, padx = 0, pady = 5, sticky = 'n')  
+               
+
+        self.tab1.buttons_frame.export_excel = ctk.CTkButton(self.tab1.buttons_frame,
+                                                            text='Eksportuj',
+                                                            width = 140,
+                                                            height = 28,
+                                                            command = export_excel,
+                                                            state = 'disabled')
+        self.tab1.buttons_frame.export_excel.grid(row = 0, column = 1,padx = 0, pady = 5, sticky = 'n')
+        
+
+
 
 
