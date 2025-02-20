@@ -209,9 +209,12 @@ class App(ctk.CTk):
             except AttributeError:
                 pass
 
-            self.tab1.check_window = ctk.CTkToplevel(self.tab1)  # Tworzymy nowe okno
-            self.tab1.check_window.geometry("350x150")  # Ustawienie rozmiaru
-            self.tab1.check_window.title("Usuwanie pomiarów")  # Tytuł okna
+            self.tab1.check_window = ctk.CTkToplevel(self.tab1) 
+            self.tab1.check_window.geometry("350x150")  
+            self.tab1.check_window.title("Usuwanie pomiarów")  
+            # Unosi okno nad inne
+            self.tab1.check_window.lift()  
+            self.tab1.check_window.grab_set()
 
             for i in range(2):  
                 self.tab1.check_window.grid_columnconfigure(i, weight=1)
@@ -226,6 +229,8 @@ class App(ctk.CTk):
 
             self.tab1.check_window.nok_button = ctk.CTkButton(self.tab1.check_window, text="Anuluj", command=self.tab1.check_window.destroy)
             self.tab1.check_window.nok_button.grid(row = 1, column = 1, padx=20, pady=0, sticky = 'e' )
+
+            
 
             
 
@@ -287,7 +292,10 @@ class App(ctk.CTk):
 
                 self.tab1.check_window = ctk.CTkToplevel(self.tab1)  
                 self.tab1.check_window.geometry("350x150") 
-                self.tab1.check_window.title("Usuwanie pomiaru")  
+                self.tab1.check_window.title("Usuwanie pomiaru") 
+                # Unosi okno nad inne
+                self.tab1.check_window.lift()  
+                self.tab1.check_window.grab_set() 
 
                 for i in range(2):  
                     self.tab1.check_window.grid_columnconfigure(i, weight=1)
