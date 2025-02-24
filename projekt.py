@@ -2,12 +2,23 @@ import customtkinter as ctk
 from pomiar import Pomiar
 import ctypes
 import uuid
+from datetime import date
 
 
-from data_manage import data_man, remove_data_using_id
+from data_manage import data_man, remove_data_using_id, save_file, load_measuremenst
 
 ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
 ctk.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
+
+
+
+
+    
+
+
+
+       
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -15,9 +26,10 @@ class App(ctk.CTk):
         self.title('Pomiary Elektryczne')
         self.iconbitmap('lightning.ico')
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ikona.ikona")
-        self.geometry('1200x600')
+        self.geometry('600x400')
         self.parameters() 
-        self.main_window()
+        self.save_window()
+        
 
     @staticmethod
     def generate_unique_id():
@@ -27,7 +39,6 @@ class App(ctk.CTk):
 
     # paramtery
     def parameters(self):
-        
         #fonts
         self.font_arial18 = ctk.CTkFont(family="Arial", 
                       size=18,
@@ -93,13 +104,124 @@ class App(ctk.CTk):
                 self.entry_ipz_variable.set(current_text[:-1])
             except IndexError:
                 pass
-
         
         self.entry_ipz_variable = ctk.StringVar()
         self.entry_ipz_variable.trace_add("write", limit_text_4_ipz)
-        
+
         
 
+        
+        
+    def run_app(self):
+       
+        self.save_tab.destroy()
+        self.geometry('1200x600')
+        self.main_window()
+
+    
+
+
+        
+    
+
+    
+    def save_window(self):
+        to_load = list()
+        self.save_tab = ctk.CTkFrame(self,
+                                     width = 550,
+                                     height = 350)
+        self.save_tab.grid(row=0, column=0, padx=25, pady=25, sticky="n")
+        self.save_tab.grid_propagate(False)
+
+        self.save_tab.label1 = ctk.CTkLabel(self.save_tab,
+                                            text='Nazwa pomiarów:',
+                                            text_color='white',
+                                            font=('Helvetica', 16)                              
+                                                  ) 
+        self.save_tab.label1.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
+
+        self.save_tab.entry1 = ctk.CTkEntry(self.save_tab, 
+                                                  placeholder_text="text",
+                                                  width=200, 
+                                                  textvariable=self.entry_name_variable 
+                                                                                 
+                                                  ) 
+        self.save_tab.entry1.grid(row=1, column=0, padx=10, pady=0, sticky="n")
+
+        self.save_tab.label1 = ctk.CTkLabel(self.save_tab,
+                                            text='notatka:',
+                                            text_color='white',
+                                                                         
+                                                  ) 
+        self.save_tab.label1.grid(row=2, column=0, padx=10, pady=10, sticky="sw")
+
+        self.save_tab.entry2 = ctk.CTkTextbox(self.save_tab,    
+                                                  width=200,
+                                                  height=150,
+                                                  wrap = 'word',
+                                                                       
+                                                  ) 
+        self.save_tab.entry2.grid(row=3, column=0, padx=10, pady=0, sticky="n")
+        self.save_tab.grid_rowconfigure(3, weight = 3)
+
+
+        
+        self.save_tab.button1 = ctk.CTkButton(self.save_tab, text="dodaj", command=self.run_app)
+        self.save_tab.button1.grid(row=4, column=0, padx=10, pady=15, sticky = 'sw')
+
+
+        def wczytaj():
+            self.save_tab.load_frame.button[x:=to_load.pop()].cget("text")
+            print(x)
+
+        self.save_tab.button2 = ctk.CTkButton(self.save_tab, 
+                                              text="wczytaj", 
+                                              command=wczytaj,
+                                              state='disabled')
+        self.save_tab.button2.grid(row=4, column=1, padx=30, pady=15, sticky = 'sw')
+
+        self.save_tab.load_frame = ctk.CTkScrollableFrame(self.save_tab,
+                                                          fg_color='white',
+                                                          width = 250,
+                                                          height = 150,
+                                                          label_text='Pomiary'
+                                                          )
+        self.save_tab.load_frame.grid(row = 0, column = 1, pady = 10, padx = 30, rowspan = 4)
+        
+
+        #load_measuremenst()
+        meas = ['pierszy', 'drugi', 'trzeci']
+        self.save_tab.load_frame.button = list(range(len(meas)))
+
+        def handle_options(i):
+
+                self.save_tab.button2.configure(state = 'normal')
+                self.save_tab.load_frame.button[i].configure(fg_color = '#5bc0eb')
+                for k in range(len(meas)):
+                    if k != i:
+                        self.save_tab.load_frame.button[k].configure(fg_color = 'white')
+
+                if not to_load:
+                    to_load.append(i)
+                else:
+                    to_load[0] = i
+                
+        for i, mea in enumerate(meas):
+            self.save_tab.load_frame.button[i]= ctk.CTkButton(self.save_tab.load_frame,
+                                                                text=mea,
+                                                                text_color='black',
+                                                                fg_color='white',
+                                                                anchor = 'w',
+                                                                width = 230,
+                                                                corner_radius=10,
+                                                                hover_color='#a0d8f1',
+                                                                command = lambda i = i: handle_options(i))
+            self.save_tab.load_frame.button[i].grid(row = i, column = 0, padx = 5, pady = 0, sticky = 'ew')
+            
+
+    
+        
+        
     # obsluga glownego okna
     def main_window(self):
         self.main_tab = ctk.CTkTabview(self,
@@ -126,7 +248,6 @@ class App(ctk.CTk):
         self.tabnames = ["Obwód jednofazowy", "Obwód jednofazowy2", "Obwód trzyfazowy"]
 
         # wywołanie funkcji do obsługi zakładek
-        
         self.tab1_window()
     
 
@@ -416,6 +537,8 @@ class App(ctk.CTk):
             # przekazywnie dodadanych danych do plikow
             data_table = [labels[i][actual_row].cget("text") for i in range(7)]
             data_table.append(labels[8][actual_row])
+            data_table.append(date.today())
+            data_table.append('nd') #not deleted
             data_man(data_table)
 
 

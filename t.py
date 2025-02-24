@@ -1,22 +1,21 @@
 import customtkinter as ctk
-import uuid  # Generowanie unikalnych ID
 
-# Tworzymy główne okno
+def wybrano_wartosc(choice):
+    print("Wybrano:", choice)
+
 root = ctk.CTk()
 root.geometry("300x200")
 
-# Słownik przechowujący {unikalne_id: przycisk}
-buttons = {}
+# Tworzymy ramkę (CTkFrame)
+frame = ctk.CTkFrame(root)
+frame.pack(pady=20, padx=20, fill="both", expand=True)
 
-# Funkcja obsługująca kliknięcie przycisku
-def button_clicked(button_id):
-    print(f"Kliknięto przycisk o ID: {button_id}")  # Wyświetlenie ID w konsoli
+# Etykieta w ramce
+label = ctk.CTkLabel(frame, text="Wybierz opcję:")
+label.pack(pady=5)
 
-# Tworzenie 3 przycisków
-for i in range(3):
-    button_id = str(uuid.uuid4())  # Generowanie unikalnego ID
-    btn = ctk.CTkButton(root, text=f"Przycisk {i+1}", command=lambda id=button_id: button_clicked(id))
-    btn.pack(pady=5)
-    buttons[button_id] = btn  # Dodanie do słownika
+# Lista rozwijana w ramce
+combo = ctk.CTkComboBox(frame, values=["Opcja 1", "Opcja 2", "Opcja 3"], command=wybrano_wartosc)
+combo.pack(pady=5)
 
 root.mainloop()
