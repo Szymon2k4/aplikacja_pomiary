@@ -5,7 +5,7 @@ import uuid
 from datetime import date
 
 
-from data_manage import data_man, remove_data_using_id, save_file, load_measuremenst
+from data_manage import data_man, remove_data_using_id, save_file, load_measuremenst, is_file_name_exist
 
 ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
 ctk.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
@@ -70,6 +70,9 @@ class App(ctk.CTk):
         self.entry_name_variable = ctk.StringVar()
         self.entry_name_variable.trace_add("write", limit_text_25_name)  
 
+        self.save_name_variable = ctk.StringVar()
+        self.entry_name_variable.trace_add("write", limit_text_25_name)
+
 
         def limit_text_2_fuse(*args):
             current_text = self.entry_fuse_variable.get()
@@ -110,21 +113,22 @@ class App(ctk.CTk):
 
         
 
+
+
         
+
         
+    # przejsie z okna zaposu do okna glownego
     def run_app(self):
-       
         self.save_tab.destroy()
         self.geometry('1200x600')
+        try:
+            self.title(f'Pomiary elektryczne:  {str(self.save_name_variable.get()).upper()}')
+        except AttributeError:
+            self.title(f'Pomiary elektryczne:  {str(self.save_name_variable).upper()}')
         self.main_window()
-
     
-
-
-        
-    
-
-    
+    #obsluga okna zapisu
     def save_window(self):
         to_load = list()
         self.save_tab = ctk.CTkFrame(self,
@@ -143,7 +147,7 @@ class App(ctk.CTk):
         self.save_tab.entry1 = ctk.CTkEntry(self.save_tab, 
                                                   placeholder_text="text",
                                                   width=200, 
-                                                  textvariable=self.entry_name_variable 
+                                                  textvariable=self.save_name_variable 
                                                                                  
                                                   ) 
         self.save_tab.entry1.grid(row=1, column=0, padx=10, pady=0, sticky="n")
@@ -164,15 +168,23 @@ class App(ctk.CTk):
         self.save_tab.entry2.grid(row=3, column=0, padx=10, pady=0, sticky="n")
         self.save_tab.grid_rowconfigure(3, weight = 3)
 
+        def dodaj():
+            name = str(self.save_name_variable.get())
+            dat = date.today()
+            print(is_file_name_exist('nazwy_pomiary.csv', name))
 
+            if data_man('nazwy_pomiary.csv', ['Nazwa', 'data'], [name, dat]) == True:
+                pass
+
+            
         
-        self.save_tab.button1 = ctk.CTkButton(self.save_tab, text="dodaj", command=self.run_app)
+        self.save_tab.button1 = ctk.CTkButton(self.save_tab, text="dodaj", command=dodaj)
         self.save_tab.button1.grid(row=4, column=0, padx=10, pady=15, sticky = 'sw')
 
 
         def wczytaj():
             self.save_tab.load_frame.button[x:=to_load.pop()].cget("text")
-            print(x)
+            self.run_app()
 
         self.save_tab.button2 = ctk.CTkButton(self.save_tab, 
                                               text="wczytaj", 
@@ -194,7 +206,6 @@ class App(ctk.CTk):
         self.save_tab.load_frame.button = list(range(len(meas)))
 
         def handle_options(i):
-
                 self.save_tab.button2.configure(state = 'normal')
                 self.save_tab.load_frame.button[i].configure(fg_color = '#5bc0eb')
                 for k in range(len(meas)):
@@ -205,6 +216,8 @@ class App(ctk.CTk):
                     to_load.append(i)
                 else:
                     to_load[0] = i
+
+                self.save_name_variable = meas[i]
                 
         for i, mea in enumerate(meas):
             self.save_tab.load_frame.button[i]= ctk.CTkButton(self.save_tab.load_frame,
@@ -539,7 +552,9 @@ class App(ctk.CTk):
             data_table.append(labels[8][actual_row])
             data_table.append(date.today())
             data_table.append('nd') #not deleted
-            data_man(data_table)
+            file_name = 'pomiary/name.csv'
+            headlines = ['nazwa', 'typ_bez', 'ipz_zab', 'prad_zw_zab', 'ipz_obl', 'obl_pr_zwarc', 'ocena', 'id', 'datetime.date(yyyy, mm, dd)', 'deleted']
+            data_man(file_name, headlines, data_table)
 
 
 
