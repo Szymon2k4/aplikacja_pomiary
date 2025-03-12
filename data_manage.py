@@ -5,7 +5,7 @@ import os
 
 
 def save_file():
-    pass
+    raise NotImplementedError
 
 def data_man(file_name, headlines, data_table):
     #tab: [nazwa, typ_bez, ipz_zab, prad_zw_zab, ipz_obl, obl_pr_zwarc, ocena, id, datetime.date(yyyy, mm, dd)]

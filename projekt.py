@@ -3,23 +3,16 @@ from pomiar import Pomiar
 import ctypes
 import uuid
 from datetime import date
-
+from itertools import count
 
 from data_manage import data_man, remove_data_using_id, save_file, load_measuremenst, is_file_name_exist
 
+# ogólne ustawienia aplikacji
 ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
 ctk.set_default_color_theme("dark-blue")  # Themes: blue (default), dark-blue, green
 
 
-
-
-    
-
-
-
-       
-
-
+# klasa do obsługi GUI
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -30,12 +23,10 @@ class App(ctk.CTk):
         self.parameters() 
         self.save_window()
         
-
     @staticmethod
     def generate_unique_id():
         return str(uuid.uuid4())  
         
-
 
     # paramtery
     def parameters(self):
@@ -130,7 +121,36 @@ class App(ctk.CTk):
     
     #obsluga okna zapisu
     def save_window(self):
+        # funkcje do obsługi buttonow w save_window
+        def dodaj():
+            name = str(self.save_name_variable.get())
+            dat = date.today()
+            print(is_file_name_exist('nazwy_pomiary.csv', name))
+
+            if data_man('nazwy_pomiary.csv', ['Nazwa', 'data'], [name, dat]) == True:
+                pass
+
+        def wczytaj():
+            self.save_tab.load_frame.button[x:=to_load.pop()].cget("text")
+            self.run_app()
+
+        def handle_options(i):
+                self.save_tab.button2.configure(state = 'normal')
+                self.save_tab.load_frame.button[i].configure(fg_color = '#5bc0eb')
+                for k in range(len(meas)):
+                    if k != i:
+                        self.save_tab.load_frame.button[k].configure(fg_color = 'white')
+
+                if not to_load:
+                    to_load.append(i)
+                else:
+                    to_load[0] = i
+
+                self.save_name_variable = meas[i]
+        #####
+
         to_load = list()
+
         self.save_tab = ctk.CTkFrame(self,
                                      width = 550,
                                      height = 350)
@@ -168,23 +188,8 @@ class App(ctk.CTk):
         self.save_tab.entry2.grid(row=3, column=0, padx=10, pady=0, sticky="n")
         self.save_tab.grid_rowconfigure(3, weight = 3)
 
-        def dodaj():
-            name = str(self.save_name_variable.get())
-            dat = date.today()
-            print(is_file_name_exist('nazwy_pomiary.csv', name))
-
-            if data_man('nazwy_pomiary.csv', ['Nazwa', 'data'], [name, dat]) == True:
-                pass
-
-            
-        
         self.save_tab.button1 = ctk.CTkButton(self.save_tab, text="dodaj", command=dodaj)
         self.save_tab.button1.grid(row=4, column=0, padx=10, pady=15, sticky = 'sw')
-
-
-        def wczytaj():
-            self.save_tab.load_frame.button[x:=to_load.pop()].cget("text")
-            self.run_app()
 
         self.save_tab.button2 = ctk.CTkButton(self.save_tab, 
                                               text="wczytaj", 
@@ -199,26 +204,10 @@ class App(ctk.CTk):
                                                           label_text='Pomiary'
                                                           )
         self.save_tab.load_frame.grid(row = 0, column = 1, pady = 10, padx = 30, rowspan = 4)
-        
-
         #load_measuremenst()
         meas = ['pierszy', 'drugi', 'trzeci']
         self.save_tab.load_frame.button = list(range(len(meas)))
 
-        def handle_options(i):
-                self.save_tab.button2.configure(state = 'normal')
-                self.save_tab.load_frame.button[i].configure(fg_color = '#5bc0eb')
-                for k in range(len(meas)):
-                    if k != i:
-                        self.save_tab.load_frame.button[k].configure(fg_color = 'white')
-
-                if not to_load:
-                    to_load.append(i)
-                else:
-                    to_load[0] = i
-
-                self.save_name_variable = meas[i]
-                
         for i, mea in enumerate(meas):
             self.save_tab.load_frame.button[i]= ctk.CTkButton(self.save_tab.load_frame,
                                                                 text=mea,
@@ -231,10 +220,6 @@ class App(ctk.CTk):
                                                                 command = lambda i = i: handle_options(i))
             self.save_tab.load_frame.button[i].grid(row = i, column = 0, padx = 5, pady = 0, sticky = 'ew')
             
-
-    
-        
-        
     # obsluga glownego okna
     def main_window(self):
         self.main_tab = ctk.CTkTabview(self,
@@ -265,8 +250,18 @@ class App(ctk.CTk):
     
 
     # obsluga pierwszej zakladki
-    def tab1_window(self):    
-        # funkcja do obslugi klawiszy
+    def tab1_window(self):   
+        # zmienne globalne okna tab1_window
+        gen = count(0, 3)            
+        delete_buttons_dict = dict()
+        labels = dict()
+        for i in range(9):
+            labels[i] = dict()
+
+
+
+        # funnkcje do obslugi buttonow w tab1_window 
+        # funkcja do obslugi klawiszy, klikniecie enter
         def kliknij_klaiwsz(event):
             if self.main_tab.get() == self.tabnames[0]:
                 if self.tab1.frame1.calculate_button.cget("state") == "normal":
@@ -288,7 +283,6 @@ class App(ctk.CTk):
                 return  # brak danych
             
             # wykonanie obliczeń(pomiaru)
-
             nazwa = self.tab1.frame1.circuit_name.cget("text")
             typ_bez = self.tab1.frame1.fuse_type_ABCD.get()
             typ_bez_liczba = self.tab1.frame1.fuse_type_nr.get()
@@ -323,7 +317,6 @@ class App(ctk.CTk):
             # zablokowanie przycisku dodaj pomiar
             self.tab1.frame2.add_measurement_button.configure(state='disabled')
 
-
             # wyczyszczenie pól
             self.tab1.frame1.entry_circuit_name.delete(0, 'end')
             self.tab1.frame1.fuse_type_ABCD.set('')
@@ -336,8 +329,26 @@ class App(ctk.CTk):
             self.tab1.frame2.calculated_short_circuit_current_result.configure(text="")
             self.tab1.frame2.grade_result.configure(text="")
 
-        #funckja przycisk usun
+        #funkcja przycisk usun
         def remove_all():
+            #funkcja wykorzystana w remove_all
+            def remove_all2():
+                self.tab1.buttons_frame.remove_all.configure(state = 'disabled')
+                ar = 0
+                removing_id = list()
+                while True:
+                    try:
+                        for i in range(8):
+                            labels[i][ar].destroy()
+                        delete_buttons_dict[ar].destroy()
+                        removing_id.append(labels[8][ar])
+                        ar +=3
+                    except KeyError:
+                        break
+                
+                self.tab1.check_window.destroy()
+                remove_data_using_id(removing_id)
+                #####
             try:
                 self.tab1.check_window.destroy()
             except AttributeError:
@@ -368,57 +379,31 @@ class App(ctk.CTk):
 
             
 
-        def remove_all2():
-            self.tab1.buttons_frame.remove_all.configure(state = 'disabled')
-            ar = 0
-            removing_id = list()
-            while True:
-                try:
-                    for i in range(8):
-                        labels[i][ar].destroy()
-                    delete_buttons_dict[ar].destroy()
-                    removing_id.append(labels[8][ar])
-                    ar +=3
-                except KeyError:
-                    break
-            
-            self.tab1.check_window.destroy()
-            remove_data_using_id(removing_id)
+        
 
         def export_excel():
             raise NotImplementedError
 
-        # generator liczb(kolejne wiersze w których będą wyświetlane pomiary)
-        def number_generator():
-            for i in range(0, 1000, 3):
-                yield i
-        gen = number_generator()
-
-
-        def handle_stop_iteration_error():
-            raise NotImplementedError
-            
-        delete_buttons_dict = dict()
-        labels = dict()
-        for i in range(9):
-            labels[i] = dict()
+ 
+        
         
         
         # rama3 - dodawanie kolejnych pomiarów
         def add_measurement():
+            actual_row = next(gen) # row kolejnego pomiaru
+
             self.tab1.buttons_frame.remove_all.configure(state = 'normal')
             self.tab1.buttons_frame.export_excel.configure(state = 'normal')
+            def handle_delete_row(ar):
+                def delete_row():
+                    for i in range(8):
+                        labels[i][ar].destroy()
+                    delete_buttons_dict[ar].destroy()
+                    self.tab1.check_window.destroy()
 
-            try:
-                actual_row = next(gen)
-            except StopIteration:
-                raise NotImplementedError
-                handle_stop_iteration_error()
- 
-            # funkcje delete_row daje wewnatrz funkcji add_measuremenet, pponoewaz podczs jej wywolania podstawiona zostaje wartosc actual_row,
-            #dlatego do odpowiedniego przycisku zostaje przypisana wartosc delete_button_dict[wartosc[actual_row]]
-            #funkcja dd_measurement zawsze zosatnie najpier wywaloana przed wywalonaiem delete_row
-            def delete_row():
+                    rmv_id = labels[8][ar]
+                    remove_data_using_id(rmv_id)
+                    ####
                 try:
                     self.tab1.check_window.destroy()
                 except AttributeError:
@@ -435,24 +420,17 @@ class App(ctk.CTk):
                     self.tab1.check_window.grid_columnconfigure(i, weight=1)
                     self.tab1.check_window.grid_rowconfigure(i, weight=1)
                 # Etykieta w nowym oknie
-                pom = labels[0][actual_row].cget("text")
+                pom = labels[0][ar].cget("text")
                 self.tab1.check_window.label = ctk.CTkLabel(self.tab1.check_window, text=f'Kliknij OK aby potwierdzić usunięcie pomiaru "{pom}"')
                 self.tab1.check_window.label.grid(row = 0, column = 0, padx=0, pady=10, sticky = 'n', columnspan = 2)
                 
                 # Przycisk zamykający okno
-                self.tab1.check_window.ok_button = ctk.CTkButton(self.tab1.check_window, text="OK", command=delete_row2)
+                self.tab1.check_window.ok_button = ctk.CTkButton(self.tab1.check_window, text="OK", command=delete_row)
                 self.tab1.check_window.ok_button.grid(row = 1, column = 0, padx=20, pady=0, sticky = 'w' )
 
                 self.tab1.check_window.nok_button = ctk.CTkButton(self.tab1.check_window, text="Anuluj", command=self.tab1.check_window.destroy)
                 self.tab1.check_window.nok_button.grid(row = 1, column = 1, padx=20, pady=0, sticky = 'e' )
-            def delete_row2():
-                    for i in range(8):
-                        labels[i][actual_row].destroy()
-                    delete_buttons_dict[actual_row].destroy()
-                    self.tab1.check_window.destroy()
-
-                    rmv_id = labels[8][actual_row]
-                    remove_data_using_id(rmv_id)
+            
                 
             #slownik do przechowywania kolejnych danych
             self.tab1.framescrol.label = dict()
@@ -518,7 +496,7 @@ class App(ctk.CTk):
                                                     text="usuń",
                                                     width = 55,
                                                     height = 35,
-                                                    command = delete_row,
+                                                    command = lambda actual_row = actual_row: handle_delete_row(actual_row),
                                                     state = 'disabled') 
             self.tab1.framescrol.delete_button.grid(row=actual_row+1, column = 6, padx=10, pady=0, sticky="w")
             
@@ -536,17 +514,11 @@ class App(ctk.CTk):
             labels[8][actual_row] = self.generate_unique_id()
            
             
-
-            
-            
             # przesuwanie strony w dół
             self.tab1.framescrol.update_idletasks()
             self.tab1.framescrol._parent_canvas.yview_moveto(1.0)
             self.tab1.frame2.add_measurement_button.configure(state='disabled')
 
-
-
-            
             # przekazywnie dodadanych danych do plikow
             data_table = [labels[i][actual_row].cget("text") for i in range(7)]
             data_table.append(labels[8][actual_row])
@@ -559,16 +531,9 @@ class App(ctk.CTk):
 
 
             self.tab1.framescrol.delete_button.configure(state = 'normal')
+        ##################
 
-
-            ## koneic funkcji add_measu
-
-            
-
-        
-            
-        
-        
+        ## IMPLEMENTACJA RAMY PIERWSZEJ
         # Rama pierwsza - w nią należy wpisać dane do obliczeń
         self.tab1.frame1 = ctk.CTkFrame(self.tab1,
                                         width=400,
@@ -822,9 +787,9 @@ class App(ctk.CTk):
         
         # okno do przyciskow
         self.tab1.buttons_frame = ctk.CTkFrame(self.tab1, 
-                                              width=693,
-                                              height=40,
-                                              fg_color = "white")
+                                            width=693,
+                                            height=40,
+                                            fg_color = "white")
 
         self.tab1.buttons_frame.grid(row = 1, column = 1, padx = 0, pady = 20, sticky = 'ws')
         self.tab1.buttons_frame.grid_propagate(False)
@@ -840,7 +805,7 @@ class App(ctk.CTk):
                                                             command = remove_all,
                                                             state = 'disabled')
         self.tab1.buttons_frame.remove_all.grid(row = 0, column = 0, padx = 0, pady = 5, sticky = 'n')  
-               
+            
 
         self.tab1.buttons_frame.export_excel = ctk.CTkButton(self.tab1.buttons_frame,
                                                             text='Eksportuj',
@@ -850,6 +815,16 @@ class App(ctk.CTk):
                                                             state = 'disabled')
         self.tab1.buttons_frame.export_excel.grid(row = 0, column = 1,padx = 0, pady = 5, sticky = 'n')
         
+    
+
+
+
+
+
+
+
+
+
 
 
 
