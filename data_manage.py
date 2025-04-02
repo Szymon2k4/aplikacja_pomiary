@@ -39,7 +39,7 @@ def dm_create_new_measuremets_file(file_name: str):
         writer.writerow(headlines)
 
 
-def dm_read_measurements(file_name: str, type = 'list', include_removed_data = False):
+def dm_read_measurements(file_name: str, type = 'list', include_removed_data = True):
     file_path = os.path.join(MEASUREMENTS_FOLDER, file_name)
     if not file_path:
         raise NotImplementedError 
@@ -74,7 +74,7 @@ def dm_read_measurements(file_name: str, type = 'list', include_removed_data = F
 
 def dm_read_all_measurements_file_name():
     try:
-        files = os.listdir([MEASUREMENTS_FOLDER])
+        files = os.listdir(MEASUREMENTS_FOLDER)
         file_names_without_extension = [os.path.splitext(file)[0] for file in files if file.endswith('.csv')]
         return file_names_without_extension
     except FileNotFoundError :
@@ -82,7 +82,7 @@ def dm_read_all_measurements_file_name():
     
     
 
-print(dm_read_all_measurements_file_name())
+
 
 def dm_remove_data_using_id(file_name, id_to_remove):
     file_path: str = os.path.join(MEASUREMENTS_FOLDER, file_name)
@@ -95,7 +95,7 @@ def dm_remove_data_using_id(file_name, id_to_remove):
         removed_id.add(id_to_remove)
 
 
-    all_data = dm_read_measurements(file_name)
+    all_data = dm_read_measurements(file_name, include_removed_data=True)
     for i, ms in enumerate(all_data):
         if ms[0] in removed_id:
             all_data[i][9] = 'DELETED'

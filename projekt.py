@@ -107,7 +107,26 @@ class App(ctk.CTk):
                 self.save_name_variable.set(current_text[:25]) 
         
         self.save_name_variable = ctk.StringVar()
-        self.save_name_variable.trace_add("write", handle_save_name_variable)    
+        self.save_name_variable.trace_add("write", handle_save_name_variable) 
+
+
+    def show_warning(self, message: str):
+        # Tworzymy nowe okno
+        self.warning_window = ctk.CTkToplevel()
+        self.warning_window.geometry("400x150")
+        self.warning_window.title("Ostrzeżenie")
+        self.warning_window.lift() 
+        self.warning_window.grab_set() 
+
+    
+        label = ctk.CTkLabel(self.warning_window, text=message, font=("Consolas", 14), text_color="orange")
+        label.pack(pady=20)
+
+       
+        self.close_button = ctk.CTkButton(self.warning_window, text="OK", command=self.warning_window.destroy)
+        self.close_button.pack(pady=10)
+
+       
 
         
 
@@ -136,9 +155,13 @@ class App(ctk.CTk):
         # funkcje do obsługi buttonow w save_window
         def add_new_file():
             new_file_name_we = str(self.save_name_variable.get())
-            if dm_create_new_measuremets_file(f'{new_file_name_we}.csv'):
-                raise NotImplementedError
-            self.run_app(new_file_name_we, initial_data_from_main_file = False)
+            if new_file_name_we == '':
+                pass
+            else:
+                if dm_create_new_measuremets_file(f'{new_file_name_we}.csv'):
+                    self.show_warning('Taki plik już istnieje, podaj inną nazwę')
+                    return
+                self.run_app(new_file_name_we, initial_data_from_main_file = False)
 
         
         to_load = list()
@@ -411,12 +434,12 @@ class App(ctk.CTk):
             data = dict()
             data['id'] = self.generate_unique_id()
             data['measure_name'] = self.tab1.frame1.entry_circuit_name.get()
-            data['fuse_type'] = self.tab1.frame1.fuse_type_ABCD.get() 
-            data['measured_ipz'] = self.tab1.frame1.entry_measured_ipz.get()
+            data['fuse_type'] = self.tab1.frame1.fuse_type_ABCD.get() + self.entry_fuse_variable.get()
+            data['measured_ipz'] = self.tab1.frame1.entry_measured_ipz.get().replace(',', '.')
             data['calculated_scircut_bo_measure'] = str(self.tab1.frame2.short_circuit_current_protection_result.cget("text"))
             data['calculated_ipz'] = str(self.tab1.frame2.ipz_security_value_result.cget("text"))
             data['calculated_scircut_bo_fuse_type'] = str(self.tab1.frame2.calculated_short_circuit_current_result.cget("text"))
-            data['grade'] = self.tab1.frame1.entry_measured_ipz.get()
+            data['grade'] = self.tab1.frame2.grade_result.cget('text')
             data['datetime.date(yyyy, mm, dd)'] = date.today()
             data['is_deleted'] = 'NOT_DELETED'
 
@@ -479,8 +502,7 @@ class App(ctk.CTk):
             
             #typ bezpiecznika
             self.tab1.framescrol.label[1][actual_row]= ctk.CTkLabel(self.tab1.framescrol, 
-                                                    text=data['fuse_type']
-                                                    + self.tab1.frame1.fuse_type_nr.get(),
+                                                    text=data['fuse_type'],
                                                     font = self.font_arial15,
                                                     text_color='black')
             self.tab1.framescrol.label[1][actual_row].grid(row=actual_row+1, column = 0, padx=10, pady=0, sticky="w")
@@ -848,7 +870,7 @@ class App(ctk.CTk):
 
         ## sprawdzanie czy nie istnieja dane poczatowe
         if initial_data_from_main_file:
-            data = dm_read_measurements(main_file_name, 'dict')
+            data = dm_read_measurements(main_file_name, 'dict', include_removed_data=False)
             for d in data:
                 add_measurement(d, add_to_file = False)
         
