@@ -5,7 +5,9 @@ import uuid
 from datetime import date
 from itertools import count
 
-from data_manage import data_man, remove_data_using_id, save_file, load_measuremenst, is_file_name_exist
+from data_manage import dm_add_measurement, dm_create_new_measuremets_file, dm_read_all_measurements_file_name, dm_remove_data_using_id, dm_read_measurements, dm_write_measurements
+
+# data_man, remove_data_using_id, save_file, load_measuremenst, is_file_name_exist
 
 # ogólne ustawienia aplikacji
 ctk.set_appearance_mode("dark")  # Modes: system (default), light, dark
@@ -52,20 +54,18 @@ class App(ctk.CTk):
                       slant="roman", 
                       )
         
-        def limit_text_25_name(*args):
+        def handle_entry_name_variable(*args):
             current_text = self.entry_name_variable.get()
-            
             if len(current_text) > 25:  
                 self.entry_name_variable.set(current_text[:25])  
         
         self.entry_name_variable = ctk.StringVar()
-        self.entry_name_variable.trace_add("write", limit_text_25_name)  
+        self.entry_name_variable.trace_add("write", handle_entry_name_variable)  
 
-        self.save_name_variable = ctk.StringVar()
-        self.entry_name_variable.trace_add("write", limit_text_25_name)
+        
 
 
-        def limit_text_2_fuse(*args):
+        def handle_entry_fuse_variable(*args):
             current_text = self.entry_fuse_variable.get()
             if len(current_text) > 2:  
                 self.entry_fuse_variable.set(current_text[:2]) 
@@ -79,12 +79,11 @@ class App(ctk.CTk):
              
         
         self.entry_fuse_variable = ctk.StringVar()
-        self.entry_fuse_variable.trace_add("write", limit_text_2_fuse)
+        self.entry_fuse_variable.trace_add("write", handle_entry_fuse_variable)
 
         
-        def limit_text_4_ipz(*args):
+        def handle_entry_ipz_variable(*args):
             current_text = self.entry_ipz_variable.get()
-
             if len(current_text) > 4:  
                 self.entry_ipz_variable.set(current_text[:4])  
         
@@ -100,7 +99,15 @@ class App(ctk.CTk):
                 pass
         
         self.entry_ipz_variable = ctk.StringVar()
-        self.entry_ipz_variable.trace_add("write", limit_text_4_ipz)
+        self.entry_ipz_variable.trace_add("write", handle_entry_ipz_variable)
+
+        def handle_save_name_variable(*args):
+            current_text = self.save_name_variable.get()
+            if len(current_text) > 25:  
+                self.save_name_variable.set(current_text[:25]) 
+        
+        self.save_name_variable = ctk.StringVar()
+        self.save_name_variable.trace_add("write", handle_save_name_variable)    
 
         
 
@@ -110,46 +117,56 @@ class App(ctk.CTk):
 
         
     # przejsie z okna zaposu do okna glownego
-    def run_app(self):
+    def run_app(self, file_name_we, initial_data_from_main_file = False):
         self.save_tab.destroy()
         self.geometry('1200x600')
         try:
-            self.title(f'Pomiary elektryczne:  {str(self.save_name_variable.get()).upper()}')
+            self.title(f'Pomiary elektryczne:  {file_name_we}')
         except AttributeError:
-            self.title(f'Pomiary elektryczne:  {str(self.save_name_variable).upper()}')
+            self.title(f'Pomiary elektryczne:  {file_name_we}')
+
         self.main_window()
+        self.tab1_window(f'{file_name_we}.csv', initial_data_from_main_file)
+
+
     
+        
     #obsluga okna zapisu
     def save_window(self):
         # funkcje do obsługi buttonow w save_window
-        def dodaj():
-            name = str(self.save_name_variable.get())
-            dat = date.today()
-            print(is_file_name_exist('nazwy_pomiary.csv', name))
+        def add_new_file():
+            new_file_name_we = str(self.save_name_variable.get())
+            if dm_create_new_measuremets_file(f'{new_file_name_we}.csv'):
+                raise NotImplementedError
+            self.run_app(new_file_name_we, initial_data_from_main_file = False)
 
-            if data_man('nazwy_pomiary.csv', ['Nazwa', 'data'], [name, dat]) == True:
-                pass
+        
+        to_load = list()
+        meas_file_names_we = dm_read_all_measurements_file_name()
+        
 
-        def wczytaj():
-            self.save_tab.load_frame.button[x:=to_load.pop()].cget("text")
-            self.run_app()
+        def load_existing_file_with_data():
+            choosen_file_we = to_load.pop()
+            self.run_app(choosen_file_we, initial_data_from_main_file = True)
 
-        def handle_options(i):
+            
+
+        def handle_options(i, choosen_file_we):
                 self.save_tab.button2.configure(state = 'normal')
                 self.save_tab.load_frame.button[i].configure(fg_color = '#5bc0eb')
-                for k in range(len(meas)):
+                for k in range(len(meas_file_names_we)):
                     if k != i:
                         self.save_tab.load_frame.button[k].configure(fg_color = 'white')
-
+        
                 if not to_load:
-                    to_load.append(i)
+                    to_load.append(choosen_file_we)
                 else:
-                    to_load[0] = i
+                    to_load[0] = choosen_file_we
 
-                self.save_name_variable = meas[i]
+                
         #####
 
-        to_load = list()
+        
 
         self.save_tab = ctk.CTkFrame(self,
                                      width = 550,
@@ -188,12 +205,12 @@ class App(ctk.CTk):
         self.save_tab.entry2.grid(row=3, column=0, padx=10, pady=0, sticky="n")
         self.save_tab.grid_rowconfigure(3, weight = 3)
 
-        self.save_tab.button1 = ctk.CTkButton(self.save_tab, text="dodaj", command=dodaj)
+        self.save_tab.button1 = ctk.CTkButton(self.save_tab, text="dodaj", command=add_new_file)
         self.save_tab.button1.grid(row=4, column=0, padx=10, pady=15, sticky = 'sw')
 
         self.save_tab.button2 = ctk.CTkButton(self.save_tab, 
                                               text="wczytaj", 
-                                              command=wczytaj,
+                                              command=load_existing_file_with_data,
                                               state='disabled')
         self.save_tab.button2.grid(row=4, column=1, padx=30, pady=15, sticky = 'sw')
 
@@ -204,24 +221,33 @@ class App(ctk.CTk):
                                                           label_text='Pomiary'
                                                           )
         self.save_tab.load_frame.grid(row = 0, column = 1, pady = 10, padx = 30, rowspan = 4)
-        #load_measuremenst()
-        meas = ['pierszy', 'drugi', 'trzeci']
-        self.save_tab.load_frame.button = list(range(len(meas)))
+        
 
-        for i, mea in enumerate(meas):
+        
+        self.save_tab.load_frame.button = list(range(len(meas_file_names_we)))
+        for i, file_name_we in enumerate(meas_file_names_we):
             self.save_tab.load_frame.button[i]= ctk.CTkButton(self.save_tab.load_frame,
-                                                                text=mea,
+                                                                text=file_name_we,
                                                                 text_color='black',
                                                                 fg_color='white',
                                                                 anchor = 'w',
                                                                 width = 230,
                                                                 corner_radius=10,
                                                                 hover_color='#a0d8f1',
-                                                                command = lambda i = i: handle_options(i))
+                                                                command = lambda i = i, file_name = file_name_we: handle_options(i, file_name))
             self.save_tab.load_frame.button[i].grid(row = i, column = 0, padx = 5, pady = 0, sticky = 'ew')
+            
+
+
+
+
+
+
+
             
     # obsluga glownego okna
     def main_window(self):
+    
         self.main_tab = ctk.CTkTabview(self,
                                    width=1150,
                                    height=500,
@@ -246,12 +272,13 @@ class App(ctk.CTk):
         self.tabnames = ["Obwód jednofazowy", "Obwód jednofazowy2", "Obwód trzyfazowy"]
 
         # wywołanie funkcji do obsługi zakładek
-        self.tab1_window()
+        
     
 
     # obsluga pierwszej zakladki
-    def tab1_window(self):   
-        # zmienne globalne okna tab1_window
+    def tab1_window(self, main_file_name, initial_data_from_main_file = False):   
+        # zmienne globalne okna tab1_window            
+        
         gen = count(0, 3)            
         delete_buttons_dict = dict()
         labels = dict()
@@ -273,7 +300,7 @@ class App(ctk.CTk):
                 
         self.bind("<Return>", kliknij_klaiwsz)
 
-        #funkcje do obslugi okna
+        #FUNCJE RAMA LEWA GORA
         def calculate():
             # sprawdzenie czy wszystkie pola są wypełnione
             if self.tab1.frame1.entry_circuit_name.get() == "" or \
@@ -338,16 +365,16 @@ class App(ctk.CTk):
                 removing_id = list()
                 while True:
                     try:
-                        for i in range(8):
+                        for i in range(1, 9):
                             labels[i][ar].destroy()
                         delete_buttons_dict[ar].destroy()
-                        removing_id.append(labels[8][ar])
+                        removing_id.append(labels[0][ar])
                         ar +=3
                     except KeyError:
                         break
                 
                 self.tab1.check_window.destroy()
-                remove_data_using_id(removing_id)
+                dm_remove_data_using_id(main_file_name, removing_id)
                 #####
             try:
                 self.tab1.check_window.destroy()
@@ -375,39 +402,45 @@ class App(ctk.CTk):
             self.tab1.check_window.nok_button = ctk.CTkButton(self.tab1.check_window, text="Anuluj", command=self.tab1.check_window.destroy)
             self.tab1.check_window.nok_button.grid(row = 1, column = 1, padx=20, pady=0, sticky = 'e' )
 
-            
-
-            
-
-        
-
         def export_excel():
             raise NotImplementedError
 
  
-        
-        
-        
-        # rama3 - dodawanie kolejnych pomiarów
-        def add_measurement():
-            actual_row = next(gen) # row kolejnego pomiaru
+        # funckja pomocnicza do zbierania danych z pol
+        def collect_data_and_add_measurement():
+            data = dict()
+            data['id'] = self.generate_unique_id()
+            data['measure_name'] = self.tab1.frame1.entry_circuit_name.get()
+            data['fuse_type'] = self.tab1.frame1.fuse_type_ABCD.get() 
+            data['measured_ipz'] = self.tab1.frame1.entry_measured_ipz.get()
+            data['calculated_scircut_bo_measure'] = str(self.tab1.frame2.short_circuit_current_protection_result.cget("text"))
+            data['calculated_ipz'] = str(self.tab1.frame2.ipz_security_value_result.cget("text"))
+            data['calculated_scircut_bo_fuse_type'] = str(self.tab1.frame2.calculated_short_circuit_current_result.cget("text"))
+            data['grade'] = self.tab1.frame1.entry_measured_ipz.get()
+            data['datetime.date(yyyy, mm, dd)'] = date.today()
+            data['is_deleted'] = 'NOT_DELETED'
 
+            add_measurement(data)
+
+        # FUNCKJE RAMA LEWY DOL
+        def add_measurement(data, add_to_file = True):
+            actual_row = next(gen) # row kolejnego pomiaru
             self.tab1.buttons_frame.remove_all.configure(state = 'normal')
             self.tab1.buttons_frame.export_excel.configure(state = 'normal')
             def handle_delete_row(ar):
                 def delete_row():
-                    for i in range(8):
+                    for i in range(1, 9):
                         labels[i][ar].destroy()
                     delete_buttons_dict[ar].destroy()
                     self.tab1.check_window.destroy()
 
-                    rmv_id = labels[8][ar]
-                    remove_data_using_id(rmv_id)
+                    rmv_id = labels[0][ar]
+                    dm_remove_data_using_id(main_file_name, rmv_id)
                     ####
-                try:
-                    self.tab1.check_window.destroy()
-                except AttributeError:
-                    pass
+                    try:
+                        self.tab1.check_window.destroy()
+                    except AttributeError:
+                        raise NotImplementedError
 
                 self.tab1.check_window = ctk.CTkToplevel(self.tab1)  
                 self.tab1.check_window.geometry("350x150") 
@@ -420,7 +453,7 @@ class App(ctk.CTk):
                     self.tab1.check_window.grid_columnconfigure(i, weight=1)
                     self.tab1.check_window.grid_rowconfigure(i, weight=1)
                 # Etykieta w nowym oknie
-                pom = labels[0][ar].cget("text")
+                pom = labels[1][ar].cget("text")
                 self.tab1.check_window.label = ctk.CTkLabel(self.tab1.check_window, text=f'Kliknij OK aby potwierdzić usunięcie pomiaru "{pom}"')
                 self.tab1.check_window.label.grid(row = 0, column = 0, padx=0, pady=10, sticky = 'n', columnspan = 2)
                 
@@ -438,7 +471,7 @@ class App(ctk.CTk):
                 self.tab1.framescrol.label[i] = dict()
             #nazwa
             self.tab1.framescrol.label[0][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
-                                            text=self.tab1.frame1.entry_circuit_name.get()
+                                            text=data['measure_name']
                                             + " ",
                                             font = self.font_arial16,
                                             text_color="#1f538d")
@@ -446,7 +479,7 @@ class App(ctk.CTk):
             
             #typ bezpiecznika
             self.tab1.framescrol.label[1][actual_row]= ctk.CTkLabel(self.tab1.framescrol, 
-                                                    text=self.tab1.frame1.fuse_type_ABCD.get() 
+                                                    text=data['fuse_type']
                                                     + self.tab1.frame1.fuse_type_nr.get(),
                                                     font = self.font_arial15,
                                                     text_color='black')
@@ -454,7 +487,7 @@ class App(ctk.CTk):
             
             #ipz obliczone
             self.tab1.framescrol.label[2][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
-                                                    text=str(self.tab1.frame2.ipz_security_value_result.cget("text"))
+                                                    text=data['calculated_ipz']
                                                     +"\u03A9",
                                                     font = self.font_arial15,
                                                     text_color='black')
@@ -462,15 +495,15 @@ class App(ctk.CTk):
 
             #prad zw. zab.
             self.tab1.framescrol.label[3][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
-                                                    text=str(self.tab1.frame2.short_circuit_current_protection_result.cget("text"))
+                                                    text=data['calculated_scircut_bo_measure']
                                                     +"A",
                                                     font = self.font_arial15,
                                                     text_color='black')
             self.tab1.framescrol.label[3][actual_row].grid(row=actual_row+1, column = 2, padx=10, pady=0, sticky="w")
 
-            #obliczone IPZ
+            #zmierzone IPZ
             self.tab1.framescrol.label[4][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
-                                                    text=self.tab1.frame1.entry_measured_ipz.get()
+                                                    text=data['measured_ipz']
                                                     +"\u03A9",
                                                     font = self.font_arial15,
                                                     text_color='black')
@@ -478,7 +511,7 @@ class App(ctk.CTk):
 
             #obliczony prad zw. zab.
             self.tab1.framescrol.label[5][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
-                                                    text=str(self.tab1.frame2.calculated_short_circuit_current_result.cget("text"))
+                                                    text=data['calculated_scircut_bo_fuse_type']
                                                     + "A",
                                                     font = self.font_arial15,
                                                     text_color='black')
@@ -486,7 +519,7 @@ class App(ctk.CTk):
 
             #ocena
             self.tab1.framescrol.label[6][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
-                                                    text=self.tab1.frame2.grade_result.cget("text"), 
+                                                    text=data['grade'], 
                                                     font = self.font_arial15,
                                                     text_color="#008B00" if self.tab1.frame2.grade_result.cget("text") == "TAK" else "#8B0000")   
             self.tab1.framescrol.label[6][actual_row].grid(row=actual_row+1, column = 5, padx=10, pady=0, sticky="w")
@@ -506,27 +539,21 @@ class App(ctk.CTk):
                                                     text_color='black')
             self.tab1.framescrol.label[7][actual_row].grid(row=actual_row+2, column=0, padx=0, pady=0, sticky="n", columnspan=7)
 
-            # zapisywanie danych do slownikow
-            for i in range(8):
-                labels[i][actual_row] = self.tab1.framescrol.label[i][actual_row]
-            delete_buttons_dict[actual_row] = self.tab1.framescrol.delete_button
 
-            labels[8][actual_row] = self.generate_unique_id()
-           
-            
-            # przesuwanie strony w dół
+             # przesuwanie strony w dół
             self.tab1.framescrol.update_idletasks()
             self.tab1.framescrol._parent_canvas.yview_moveto(1.0)
             self.tab1.frame2.add_measurement_button.configure(state='disabled')
 
-            # przekazywnie dodadanych danych do plikow
-            data_table = [labels[i][actual_row].cget("text") for i in range(7)]
-            data_table.append(labels[8][actual_row])
-            data_table.append(date.today())
-            data_table.append('nd') #not deleted
-            file_name = 'pomiary/name.csv'
-            headlines = ['nazwa', 'typ_bez', 'ipz_zab', 'prad_zw_zab', 'ipz_obl', 'obl_pr_zwarc', 'ocena', 'id', 'datetime.date(yyyy, mm, dd)', 'deleted']
-            data_man(file_name, headlines, data_table)
+            ########################## zapis danych
+            # zapisywanie danych do slownikow
+            for i in range(1, 9):
+                labels[i][actual_row] = self.tab1.framescrol.label[i-1][actual_row]
+            delete_buttons_dict[actual_row] = self.tab1.framescrol.delete_button
+            labels[0][actual_row] = data['id']
+
+            if add_to_file:
+                dm_add_measurement(main_file_name, data)
 
 
 
@@ -557,7 +584,7 @@ class App(ctk.CTk):
                                              text_color='black'
                                              )
         self.tab1.frame1.circuit_name.grid(row=1, column=0, padx=20, pady=5, sticky="w")
-
+        
         self.tab1.frame1.entry_circuit_name = ctk.CTkEntry(self.tab1.frame1, 
                                                   placeholder_text="",
                                                   width=200,
@@ -698,10 +725,13 @@ class App(ctk.CTk):
         # przycisk dodaj pomiar
         self.tab1.frame2.add_measurement_button = ctk.CTkButton(self.tab1.frame2, 
                                                text="Dodaj pomiar",
-                                               command=add_measurement,
+                                               command=collect_data_and_add_measurement,
                                                state='disabled',
                                                )
         self.tab1.frame2.add_measurement_button.grid(row=5, column=0, padx=15, pady=10, sticky="w")
+
+
+        
 
 
         # Rama trzecia - w niej wyświetlają się pomiary
@@ -814,6 +844,13 @@ class App(ctk.CTk):
                                                             command = export_excel,
                                                             state = 'disabled')
         self.tab1.buttons_frame.export_excel.grid(row = 0, column = 1,padx = 0, pady = 5, sticky = 'n')
+
+
+        ## sprawdzanie czy nie istnieja dane poczatowe
+        if initial_data_from_main_file:
+            data = dm_read_measurements(main_file_name, 'dict')
+            for d in data:
+                add_measurement(d, add_to_file = False)
         
     
 

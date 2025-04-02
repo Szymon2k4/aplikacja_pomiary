@@ -1,86 +1,108 @@
 import csv
 import os
+from  typing import List, Set, Any
 
 
+MEASUREMENTS_HEADLINES =  ['id', 'measure_name', 'fuse_type', 'measured_ipz', 'calculated_scircut_bo_measure', 'calculated_ipz', 'calculated_scircut_bo_fuse_type', 'grade', 'datetime.date(yyyy, mm, dd)', 'is_deleted']
+MEASUREMENTS_FOLDER = 'measurements_data'
 
 
-def save_file():
-    raise NotImplementedError
-
-def data_man(file_name, headlines, data_table):
-    #tab: [nazwa, typ_bez, ipz_zab, prad_zw_zab, ipz_obl, obl_pr_zwarc, ocena, id, datetime.date(yyyy, mm, dd)]
-    print(data_table)
-
-    file_exists = os.path.isfile(file_name)
-
-    with open(file_name, "a", newline="", encoding="utf-8") as f:
+def dm_add_measurement(file_name: str, data_table: Set):
+    file_path: str = os.path.join(MEASUREMENTS_FOLDER, file_name) 
+    file_exists: bool = os.path.isfile(file_path)
+    if not file_exists:
+        raise FileNotFoundError
+    data = [elem for elem in data_table.values()]
+    
+    with open(file_path, "a", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        if not file_exists:
-            writer.writerow(headlines)
-        writer.writerow(data_table)
+        writer.writerow(data)
 
+
+def dm_write_measurements(file_name: str, data: List[List[Any]]):
+    file_path = os.path.join(MEASUREMENTS_FOLDER, file_name)
+    with open(file_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(MEASUREMENTS_HEADLINES)
+        writer.writerows(data)
+
+
+def dm_create_new_measuremets_file(file_name: str):
+    file_path: str = os.path.join(MEASUREMENTS_FOLDER, file_name)
+    headlines = MEASUREMENTS_HEADLINES
+    file_exists: bool = os.path.isfile(file_path)
+    if file_exists:
+        return 1
+
+    with open(file_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(headlines)
+
+
+def dm_read_measurements(file_name: str, type = 'list', include_removed_data = False):
+    file_path = os.path.join(MEASUREMENTS_FOLDER, file_name)
+    if not file_path:
+        raise NotImplementedError 
+    with open(file_path, "r", newline="", encoding="utf-8") as f:
+        reader = csv.reader(f)
+        data = [elem for elem in reader if elem != [] ][1:]
+
+    if not include_removed_data:  
+        data = [elem for elem in data if elem[9] == 'NOT_DELETED']  
+
+    if type == 'list':
+        return data
+    elif type == 'dict':
+        all_data = list()
+        i = 0
+        while True:
+            dict_data = dict()
+            try:
+                for key, val in zip(MEASUREMENTS_HEADLINES, data[i]):
+                    dict_data[key] = val
+                all_data.append(dict_data)
+                i += 1
+            except IndexError:
+                break
+        return all_data
+
+    else:
+        raise ValueError
+    
     
 
 
-def remove_data_using_id(data):
-    file_name = 'pomiary/name.csv'
-    print('do usuniecia', data)
+def dm_read_all_measurements_file_name():
+    try:
+        files = os.listdir([MEASUREMENTS_FOLDER])
+        file_names_without_extension = [os.path.splitext(file)[0] for file in files if file.endswith('.csv')]
+        return file_names_without_extension
+    except FileNotFoundError :
+        raise FileNotFoundError
+    
+    
 
-    removed_id = set()
-    if isinstance(data, list):
-        for d in data:
+print(dm_read_all_measurements_file_name())
+
+def dm_remove_data_using_id(file_name, id_to_remove):
+    file_path: str = os.path.join(MEASUREMENTS_FOLDER, file_name)
+
+    removed_id: Set = set()
+    if isinstance(id_to_remove, list):
+        for d in id_to_remove:
             removed_id.add(d)
     else:
-        removed_id.add(data)
+        removed_id.add(id_to_remove)
 
 
-    with open(file_name, "r", newline="") as f:
-        reader = list(csv.reader(f))  # Konwersja do listy
-    
-    print('rem_id', removed_id)
-    for i, ms in enumerate(reader):
-        print(ms[7])
-        if ms[7] in removed_id:
-            reader[i][9] = 'del'
+    all_data = dm_read_measurements(file_name)
+    for i, ms in enumerate(all_data):
+        if ms[0] in removed_id:
+            all_data[i][9] = 'DELETED'
 
-    with open(file_name, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerows(reader)
-            
-
-        
+    dm_write_measurements(file_name, all_data)
 
 
-def read(file_name):
-    with open(file_name, "r", newline="", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        for r in reader:
-            print(r)
-
-def load_measuremenst():
-    file_name = 'nazwy_pomiarow.csv'
-
-    with open(file_name, "r", newline="", encoding="utf-8") as f:
-        reader = csv.reader(f)
-
-
-
-def is_file_name_exist(file_name, data):
-    # zmienic na os.fileexist, przeszukiwnaie folderu
-    with open(file_name, "r", newline="", encoding="utf-8") as f:
-        reader = list(csv.reader(f))
-    print(reader)
-    read = list()
-
-    for d in reader:
-        try:
-            if d[0] == data:
-                return True
-        except IndexError:
-            continue
-    return False
-
-    
 
 
 

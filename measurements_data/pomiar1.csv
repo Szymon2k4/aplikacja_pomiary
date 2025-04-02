@@ -1,0 +1,2 @@
+id,measure_name,fuse_type,measured_ipz,calculated_scircut_bo_measure,calculated_ipz,calculated_scircut_bo_fuse_type,grade,"datetime.date(yyyy, mm, dd)",is_deleted
+4d3ebe42-9eb8-4a60-82dc-ffff16dd4d4e,nazwa,B,1,105,2.19,230,1,2025-04-02,DELETED
