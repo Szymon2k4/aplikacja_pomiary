@@ -105,6 +105,24 @@ def dm_remove_data_using_id(file_name, id_to_remove):
 
 
 
+def dm_new_measurements_file_and_note(file_name, note):
+    FILE = 'file_names_and_initial_notes.csv'
+    file_exists: bool = os.path.isfile(FILE)
+    if not file_exists:
+        #create file
+        raise NotImplementedError
+    
+    data = [file_name, note]
+    
+    with open(FILE, "a", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(data)
+
+
+
+
+
+
 
     
     

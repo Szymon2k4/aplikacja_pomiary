@@ -1,3 +1,0 @@
-id,measure_name,fuse_type,measured_ipz,calculated_scircut_bo_measure,calculated_ipz,calculated_scircut_bo_fuse_type,grade,"datetime.date(yyyy, mm, dd)",is_deleted
-bcb6caef-8c55-4014-875b-1ccbbb596a2f,dkew,A99,1.01,297,0.77,228,NIE,2025-04-02,NOT_DELETED
-70635d9b-83b9-4c2a-8225-09d0abf616d5,pomioadedec,B21,12,105,2.19,19,NIE,2025-04-02,NOT_DELETED

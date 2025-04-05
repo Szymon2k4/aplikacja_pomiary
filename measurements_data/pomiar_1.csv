@@ -1,0 +1,5 @@
+id,measure_name,fuse_type,measured_ipz,calculated_scircut_bo_measure,calculated_ipz,calculated_scircut_bo_fuse_type,grade,"datetime.date(yyyy, mm, dd)",is_deleted
+6bbceccd-b0d7-40aa-9772-ab617db4a027,pom1,B16,1.07,80,2.88,215,TAK,2025-04-05,NOT_DELETED
+9c878401-0653-43f5-a4c6-c4900d242e83,pom2,B16,1.23,80,2.88,187,TAK,2025-04-05,NOT_DELETED
+43a1041b-182c-4db1-b2d0-ac217a05c1f4,pom3,C8,1.03,80,2.88,223,TAK,2025-04-05,NOT_DELETED
+871ff396-df13-4e9e-8757-f64576b06dca,pom4,B26,1.14,130,1.77,202,TAK,2025-04-05,NOT_DELETED

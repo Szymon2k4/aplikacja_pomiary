@@ -5,7 +5,7 @@ import uuid
 from datetime import date
 from itertools import count
 
-from data_manage import dm_add_measurement, dm_create_new_measuremets_file, dm_read_all_measurements_file_name, dm_remove_data_using_id, dm_read_measurements, dm_write_measurements
+from data_manage import dm_add_measurement, dm_create_new_measuremets_file, dm_read_all_measurements_file_name, dm_remove_data_using_id, dm_read_measurements, dm_write_measurements, dm_new_measurements_file_and_note
 
 # data_man, remove_data_using_id, save_file, load_measuremenst, is_file_name_exist
 
@@ -110,6 +110,9 @@ class App(ctk.CTk):
         self.save_name_variable.trace_add("write", handle_save_name_variable) 
 
 
+         
+
+
     def show_warning(self, message: str):
         # Tworzymy nowe okno
         self.warning_window = ctk.CTkToplevel()
@@ -161,7 +164,10 @@ class App(ctk.CTk):
                 if dm_create_new_measuremets_file(f'{new_file_name_we}.csv'):
                     self.show_warning('Taki plik już istnieje, podaj inną nazwę')
                     return
+                note = self.save_tab.entry2.get('1.0', 'end').strip()
+                dm_new_measurements_file_and_note(f'{new_file_name_we}.csv', note)
                 self.run_app(new_file_name_we, initial_data_from_main_file = False)
+
 
         
         to_load = list()
@@ -222,7 +228,7 @@ class App(ctk.CTk):
         self.save_tab.entry2 = ctk.CTkTextbox(self.save_tab,    
                                                   width=200,
                                                   height=150,
-                                                  wrap = 'word',
+                                                  wrap = 'word'
                                                                        
                                                   ) 
         self.save_tab.entry2.grid(row=3, column=0, padx=10, pady=0, sticky="n")
@@ -317,7 +323,7 @@ class App(ctk.CTk):
                 if self.tab1.frame1.calculate_button.cget("state") == "normal":
                     calculate()
                 elif self.tab1.frame2.add_measurement_button.cget("state") == "normal":
-                    add_measurement()
+                    collect_data_and_add_measurement()
                 else:
                     pass
                 
@@ -543,7 +549,7 @@ class App(ctk.CTk):
             self.tab1.framescrol.label[6][actual_row] = ctk.CTkLabel(self.tab1.framescrol, 
                                                     text=data['grade'], 
                                                     font = self.font_arial15,
-                                                    text_color="#008B00" if self.tab1.frame2.grade_result.cget("text") == "TAK" else "#8B0000")   
+                                                    text_color="#008B00" if data['grade'] == 'TAK' else "#8B0000")   
             self.tab1.framescrol.label[6][actual_row].grid(row=actual_row+1, column = 5, padx=10, pady=0, sticky="w")
             
             #przycisk usun
